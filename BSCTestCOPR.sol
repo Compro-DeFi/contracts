@@ -1,11 +1,4 @@
 // SPDX-License-Identifier: GPL-3.0
-/**
- *Submitted for verification at Etherscan.io on 2020-08-26
-*/
-
-// File: @openzeppelin/contracts/GSN/Context.sol
-
-
 
 pragma solidity ^0.6.2;
 
@@ -767,13 +760,13 @@ contract Ownable is Context {
 }
 
 
-// SushiToken with Governance.
+// ComProToken
 contract ComPro is ERC20("ComProToken", "COPR"), Ownable {
     
-    uint256 private constant maxCap = 560000000*(1e18);
-    uint256 public seedShare =maxCap.mul(51).div(100).mul(5).div(100);//5% of maxCap
-    uint256 public teamShare =maxCap.mul(51).div(100).mul(10).div(100);//10% of maxCap
-    uint256 public fundShare =maxCap.mul(51).div(100).mul(10).div(100);//10% of maxCap
+    uint256 private constant MAX_CAP = 560000000*(1e18);
+    uint256 public seedShare =MAX_CAP.mul(51).div(100).mul(5).div(100);//5% of MAX_CAP
+    uint256 public teamShare =MAX_CAP.mul(51).div(100).mul(10).div(100);//10% of MAX_CAP
+    uint256 public fundShare =MAX_CAP.mul(51).div(100).mul(10).div(100);//10% of MAX_CAP
     
     uint256 public nextTeamReleaseTime;
     uint256 public teamReleaseNum = 0;// LT 24
@@ -782,7 +775,7 @@ contract ComPro is ERC20("ComProToken", "COPR"), Ownable {
     uint256 public nextSeedReleaseTime;
     uint256 public seedReleaseNum = 0;// LT 12
     
-    uint256 public constant oneMonth = 30 days;//for live
+    uint256 private constant ONE_MONTH = 30 days;//for live
     
     //manager can release seedShare,teamShare,fundShare monthly
     address public manager;
@@ -818,14 +811,14 @@ contract ComPro is ERC20("ComProToken", "COPR"), Ownable {
      * @return success is true or false 
      */
     function releaseTeamShare(address _to) public onlyManager returns (bool success) {
-        uint256 _value = teamShare.div(24);//2 years => 24
-        require(now > nextTeamReleaseTime, "Not time");
-        require(teamReleaseNum < 24, "release times exceeded");
+        uint256 _value = teamShare.div(24);//2 years => 24 -3 
+        require(now > nextTeamReleaseTime, "It's not time to release");
+        require(teamReleaseNum < 21, "release times exceeded");
         
         _mint(_to,_value);
         _moveDelegates(address(0), _delegates[_to], _value);
         
-        nextTeamReleaseTime += oneMonth;
+        nextTeamReleaseTime += ONE_MONTH;
         teamReleaseNum += 1;
         success = true;
     }
@@ -836,14 +829,14 @@ contract ComPro is ERC20("ComProToken", "COPR"), Ownable {
      * @return success is true or false 
      */
     function releaseFundShare(address _to) public onlyManager returns (bool success) {
-        uint256 _value = fundShare.div(12);//1 years => 12
-        require(now > nextFundReleaseTime, "Not time");
-        require(fundReleaseNum < 12, "release times exceeded");
+        uint256 _value = fundShare.div(12);//1 years => 12 -3
+        require(now > nextFundReleaseTime, "It's not time to release");
+        require(fundReleaseNum < 9, "release times exceeded");
         
         _mint(_to,_value);
         _moveDelegates(address(0), _delegates[_to], _value);
         
-        nextFundReleaseTime += oneMonth;
+        nextFundReleaseTime += ONE_MONTH;
         fundReleaseNum += 1;
         success = true;
     }
@@ -855,13 +848,13 @@ contract ComPro is ERC20("ComProToken", "COPR"), Ownable {
      */
     function releaseSeedShare(address _to) public onlyManager returns (bool success) {
         uint256 _value = seedShare.mul(50).div(100).div(9);
-        require(now > nextSeedReleaseTime, "Not time");
+        require(now > nextSeedReleaseTime, "It's not time to release");
         require(seedReleaseNum < 9, "release times exceeded");
         
         _mint(_to,_value);
         _moveDelegates(address(0), _delegates[_to], _value);
         
-        nextSeedReleaseTime += oneMonth;
+        nextSeedReleaseTime += ONE_MONTH;
         seedReleaseNum += 1;
         success = true;
     }
@@ -1016,9 +1009,9 @@ contract ComPro is ERC20("ComProToken", "COPR"), Ownable {
         );
 
         address signatory = ecrecover(digest, v, r, s);
-        require(signatory != address(0), "SUSHI::delegateBySig: invalid signature");
-        require(nonce == nonces[signatory]++, "SUSHI::delegateBySig: invalid nonce");
-        require(now <= expiry, "SUSHI::delegateBySig: signature expired");
+        require(signatory != address(0), "COPR::delegateBySig: invalid signature");
+        require(nonce == nonces[signatory]++, "COPR::delegateBySig: invalid nonce");
+        require(now <= expiry, "COPR::delegateBySig: signature expired");
         return _delegate(signatory, delegatee);
     }
 
@@ -1048,7 +1041,7 @@ contract ComPro is ERC20("ComProToken", "COPR"), Ownable {
         view
         returns (uint256)
     {
-        require(blockNumber < block.number, "SUSHI::getPriorVotes: not yet determined");
+        require(blockNumber < block.number, "COPR::getPriorVotes: not yet determined");
 
         uint32 nCheckpoints = numCheckpoints[account];
         if (nCheckpoints == 0) {
@@ -1085,7 +1078,7 @@ contract ComPro is ERC20("ComProToken", "COPR"), Ownable {
         internal
     {
         address currentDelegate = _delegates[delegator];
-        uint256 delegatorBalance = balanceOf(delegator); // balance of underlying SUSHIs (not scaled);
+        uint256 delegatorBalance = balanceOf(delegator); // balance of underlying COPRs (not scaled);
         _delegates[delegator] = delegatee;
 
         emit DelegateChanged(delegator, currentDelegate, delegatee);
@@ -1121,7 +1114,7 @@ contract ComPro is ERC20("ComProToken", "COPR"), Ownable {
     )
         internal
     {
-        uint32 blockNumber = safe32(block.number, "SUSHI::_writeCheckpoint: block number exceeds 32 bits");
+        uint32 blockNumber = safe32(block.number, "COPR::_writeCheckpoint: block number exceeds 32 bits");
 
         if (nCheckpoints > 0 && checkpoints[delegatee][nCheckpoints - 1].fromBlock == blockNumber) {
             checkpoints[delegatee][nCheckpoints - 1].votes = newVotes;
