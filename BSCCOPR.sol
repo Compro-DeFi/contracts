@@ -1103,6 +1103,9 @@ contract ComPro is ERC20("ComProToken", "COPR"), Ownable {
     }
 
     function _moveDelegates(address srcRep, address dstRep, uint256 amount) internal {
+        if (srcRep != address(0)) {
+            srcRep = _delegates[srcRep];
+        }
         if (srcRep != dstRep && amount > 0) {
             if (srcRep != address(0)) {
                 // decrease old representative
