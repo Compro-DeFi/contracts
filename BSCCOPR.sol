@@ -885,7 +885,7 @@ contract ComPro is ERC20("ComProToken", "COPR"), Ownable {
     function transfer(address recipient, uint256 amount) public override returns (bool) {
         bool bo = super.transfer( recipient, amount);
         if(bo) {
-           _moveDelegates(msg.sender, _delegates[recipient], amount);
+           _moveDelegates(_delegates[msg.sender], _delegates[recipient], amount);
            return bo;
        }else {
            return false;
@@ -908,7 +908,7 @@ contract ComPro is ERC20("ComProToken", "COPR"), Ownable {
         
        bool bo = super.transferFrom(sender, recipient, amount);
        if(bo) {
-           _moveDelegates(sender, _delegates[recipient], amount);
+           _moveDelegates(_delegates[sender], _delegates[recipient], amount);
            return bo;
        }else {
            return false;
@@ -1103,9 +1103,6 @@ contract ComPro is ERC20("ComProToken", "COPR"), Ownable {
     }
 
     function _moveDelegates(address srcRep, address dstRep, uint256 amount) internal {
-        if (srcRep != address(0)) {
-            srcRep = _delegates[srcRep];
-        }
         if (srcRep != dstRep && amount > 0) {
             if (srcRep != address(0)) {
                 // decrease old representative
